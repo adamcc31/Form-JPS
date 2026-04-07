@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulir Pemesanan SIMCARD JP-SMART</title>
+    <style>
+        /* General Styling */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Form Container Card */
+        .form-container {
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Header */
+        .form-header h1 {
+            font-size: 24px;
+            color: #1c1e21;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .form-header p {
+            font-size: 13px;
+            color: #606770;
+            text-align: center;
+            margin-bottom: 25px;
+            border-top: 1px solid #dddfe2;
+            padding-top: 15px;
+        }
+
+        /* Form Group Styling */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 15px;
+        }
+        
+        .form-group .label-note {
+            font-weight: 400;
+            font-size: 12px;
+            color: #606770;
+            margin-top: -5px;
+            margin-bottom: 8px;
+        }
+
+        /* Input Fields Styling */
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccd0d5;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #1877f2;
+            box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+        }
+        
+        /* Input validation feedback */
+        .form-control.invalid {
+            border-color: #fa383e;
+        }
+
+        #nik-feedback {
+            font-size: 12px;
+            color: #fa383e;
+            margin-top: 5px;
+            display: none; 
+        }
+
+        /* Radio Button Styling */
+        .radio-group {
+            border: 1px solid #ccd0d5;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        
+        .radio-group h3 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .radio-group .sub-judul {
+            font-size: 13px;
+            color: #606770;
+            margin-bottom: 15px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .radio-option:last-child {
+            margin-bottom: 0;
+        }
+
+        .radio-option input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        /* File Upload Styling */
+        .file-upload-wrapper {
+            border: 2px dashed #ccd0d5;
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .file-upload-wrapper:hover {
+            border-color: #1877f2;
+        }
+
+        .file-upload-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-text {
+            color: #606770;
+        }
+
+        #ktp-filename, #paspor-filename {
+            margin-top: 10px;
+            font-weight: 600;
+            color: #1877f2;
+        }
+        
+        /* Image Banner Styling */
+        .banner-img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background-color: #f0f2f5;
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background-color: #42b72a;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: #36a420;
+        }
+
+        .btn-submit:disabled {
+            background-color: #a5d6a7;
+            cursor: not-allowed;
+        }
+        
+        /* Success Message */
+        #success-message {
+            display: none;
+            padding: 15px;
+            background-color: #e9f6ec;
+            color: #42b72a;
+            border: 1px solid #a5d6a7;
+            border-radius: 6px;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <div class="form-header">
+            <h1>FORMULIR PEMESANAN SIMCARD JP-SMART</h1>
+            <p>Nama, alamat email, dan foto yang terkait dengan Akun Google Anda akan direkam saat Anda mengupload file dan mengirimkan formulir ini</p>
+        </div>
+
+        <form id="simcard-form">
+            <div class="form-group">
+                <label for="nama-lengkap">Nama Lengkap (sesuai KTP)</label>
+                <input type="text" id="nama-lengkap" name="Nama Lengkap" class="form-control" placeholder="Tulis dengan huruf kapital" required>
+            </div>
+
+            <div class="form-group">
+                <label for="nik">NIK (Nomor Induk Kependudukan)</label>
+                <input type="text" id="nik" name="NIK" class="form-control" placeholder="16 digit angka" pattern="\d{16}" title="NIK harus terdiri dari 16 digit angka.">
+                <div id="nik-feedback">NIK harus 16 digit angka.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="nomor-paspor">Nomor Paspor</label>
+                <input type="text" id="nomor-paspor" name="Nomor Paspor" class="form-control" placeholder="Contoh: X1234567">
+            </div>
+
+            <div class="form-group">
+                <label for="tanggal-lahir">Tanggal Lahir</label>
+                <input type="date" id="tanggal-lahir" name="Tanggal Lahir" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="alamat">Alamat Tempat Tinggal di Indonesia</label>
+                <textarea id="alamat" name="Alamat" class="form-control" rows="3" placeholder="Jl. Merdeka No. 17, Jakarta"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Aktif</label>
+                <input type="email" id="email" name="Email" class="form-control" placeholder="contoh@email.com">
+            </div>
+
+            <div class="form-group">
+                <label for="whatsapp">No WhatsApp atau Telepon Saat Ini</label>
+                <input type="tel" id="whatsapp" name="No WhatsApp" class="form-control" placeholder="081234567890">
+            </div>
+
+            <div class="form-group">
+                <label for="lpk">Dari LPK Mana?</label>
+                <input type="text" id="lpk" name="LPK" class="form-control" placeholder="Nama LPK">
+            </div>
+
+            <div class="form-group">
+                <label for="tanggal-berangkat">Tanggal Keberangkatan</label>
+                <input type="date" id="tanggal-berangkat" name="Tanggal Keberangkatan" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="tanggal-aktivasi">Tanggal Aktivasi Kartu Simcard</label>
+                 <p class="label-note">Tanggal kedatangan di Jepang / tanggal 1 di bulan selanjutnya untuk dapat full kuota free 2 bulan.</p>
+                <input type="date" id="tanggal-aktivasi" name="Tanggal Aktivasi" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                 <label>Pilihan Paket Bulanan</label>
+                 <img src="img/pict-3.png" alt="Banner Pilihan Paket" class="banner-img">
+                 <div class="radio-group">
+                    <h3>Harga ¥3300</h3>
+                    <p class="sub-judul">(termasuk simcard + free kuota 2 bulan)</p>
+                    
+                    <div class="radio-option">
+                        <input type="radio" id="paket1" name="Pilihan Paket" value="3 GB Call Sim - Sinyal 5G (¥1.408/bulan)">
+                        <label for="paket1">3 GB Call Sim - Sinyal 5G (¥1.408/bulan)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="paket2" name="Pilihan Paket" value="20 GB Call Sim - Sinyal 5G (¥2.178/bulan)">
+                        <label for="paket2">20 GB Call Sim - Sinyal 5G (¥2.178/bulan)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="paket3" name="Pilihan Paket" value="100 GB Call Sim - Sinyal 5G (¥5.478/bulan)">
+                        <label for="paket3">100 GB Call Sim - Sinyal 5G (¥5.478/bulan)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="paket4" name="Pilihan Paket" value="3 GB Data Sim - Sinyal 4G LTE (¥1.078/bulan)">
+                        <label for="paket4">3 GB Data Sim - Sinyal 4G LTE (¥1.078/bulan)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="paket5" name="Pilihan Paket" value="20 GB Data Sim - Sinyal 4G LTE (¥1.848/bulan)">
+                        <label for="paket5">20 GB Data Sim - Sinyal 4G LTE (¥1.848/bulan)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="paket6" name="Pilihan Paket" value="100 GB Data Sim - Sinyal 4G LTE (¥5.148/bulan)">
+                        <label for="paket6">100 GB Data Sim - Sinyal 4G LTE (¥5.148/bulan)</label>
+                    </div>
+                 </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="hp">Merk & Tipe HP</label>
+                <input type="text" id="hp" name="Merk HP" class="form-control" placeholder="Contoh: Samsung / A10">
+            </div>
+
+            <div class="form-group">
+                <label>Dari mana Anda mengetahui informasi mengenai JP SMART SIM?</label>
+                <div class="radio-group" id="sumber-info-group">
+                    <div class="radio-option">
+                        <input type="radio" id="sumber-ig" name="Sumber Informasi" value="Instagram">
+                        <label for="sumber-ig">Instagram</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="sumber-tiktok" name="Sumber Informasi" value="TikTok">
+                        <label for="sumber-tiktok">TikTok</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="sumber-fb" name="Sumber Informasi" value="Facebook">
+                        <label for="sumber-fb">Facebook</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="sumber-teman" name="Sumber Informasi" value="Teman / Rekan">
+                        <label for="sumber-teman">Teman / Rekan</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="sumber-lpk" name="Sumber Informasi" value="Sosialisasi di LPK">
+                        <label for="sumber-lpk">Sosialisasi di LPK</label>
+                    </div>
+                    <div class="radio-option" style="align-items: center; display: flex;">
+                        <input type="radio" id="sumber-lainnya" name="Sumber Informasi" value="Lainnya">
+                        <label for="sumber-lainnya" style="margin-right: 10px; white-space: nowrap;">Lainnya:</label>
+                        <input type="text" id="sumber-lainnya-text" class="form-control" style="flex-grow: 1; padding: 8px;" disabled>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" id="pic-group" style="display: none;">
+                <label>Jika mendapatkan informasi dari Sosialisasi di LPK atau Team JP SMART SIM, dengan siapa Anda terhubung?</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="pic-there" name="PIC" value="Mba There">
+                        <label for="pic-there">Mba There</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="pic-hegar" name="PIC" value="Mas Hegar">
+                        <label for="pic-hegar">Mas Hegar</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="upload-ktp">Upload Foto KTP</label>
+                <img src="img/pict-2.jpg" alt="Banner Contoh KTP" class="banner-img">
+                <label for="upload-ktp" class="file-upload-wrapper">
+                    <span class="file-upload-text">Klik untuk memilih file</span>
+                    <div id="ktp-filename"></div>
+                </label>
+                <input type="file" id="upload-ktp" name="Foto KTP" class="form-control" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label for="upload-paspor">Upload Foto Paspor (Jika ada)</label>
+                <img src="img/pict-1.jpg" alt="Banner Contoh Paspor" class="banner-img">
+                <label for="upload-paspor" class="file-upload-wrapper">
+                    <span class="file-upload-text">Klik untuk memilih file</span>
+                    <div id="paspor-filename"></div>
+                </label>
+                <input type="file" id="upload-paspor" name="Foto Paspor" class="form-control" accept="image/*">
+            </div>
+
+            <button type="submit" class="btn-submit" id="submit-button">Daftar Sekarang</button>
+        </form>
+        
+        <div id="success-message">
+            <strong>Terima kasih!</strong> Formulir Anda telah berhasil dikirim.
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFFwbifbX0IL7rETJN9jiUU-nxWu0YK3kompuREnBTnIZANwDmB724wiCuRowGduGr/exec'; 
+
+        // --- Elemen-elemen Form ---
+        const form = document.getElementById('simcard-form');
+        const submitButton = document.getElementById('submit-button');
+        const successMessage = document.getElementById('success-message');
+        const namaLengkapInput = document.getElementById('nama-lengkap');
+        const nikInput = document.getElementById('nik');
+        const nikFeedback = document.getElementById('nik-feedback');
+        const ktpUpload = document.getElementById('upload-ktp');
+        const pasporUpload = document.getElementById('upload-paspor');
+        const ktpFilename = document.getElementById('ktp-filename');
+        const pasporFilename = document.getElementById('paspor-filename');
+
+        // Elemen Form Baru
+        const sumberRadios = document.querySelectorAll('input[name="Sumber Informasi"]');
+        const sumberLainnyaText = document.getElementById('sumber-lainnya-text');
+        const picGroup = document.getElementById('pic-group');
+
+        // --- Event Listener ---
+
+        // 1. Auto-kapitalisasi untuk Nama Lengkap
+        namaLengkapInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+
+        // 2. Validasi NIK (16 digit angka) secara real-time
+        nikInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '');
+            if (this.value.length > 0 && this.value.length !== 16) {
+                this.classList.add('invalid');
+                nikFeedback.style.display = 'block';
+            } else {
+                this.classList.remove('invalid');
+                nikFeedback.style.display = 'none';
+            }
+        });
+
+        // 3. Menampilkan nama file yang di-upload
+        ktpUpload.addEventListener('change', function() {
+            ktpFilename.textContent = this.files.length > 0 ? this.files[0].name : '';
+        });
+
+        pasporUpload.addEventListener('change', function() {
+            pasporFilename.textContent = this.files.length > 0 ? this.files[0].name : '';
+        });
+
+        // 4. Logika visibilitas dan disable/enable input "Lainnya" & "PIC"
+        sumberRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.id === 'sumber-lainnya') {
+                    sumberLainnyaText.disabled = false;
+                    sumberLainnyaText.required = true;
+                    sumberLainnyaText.focus();
+                } else {
+                    sumberLainnyaText.disabled = true;
+                    sumberLainnyaText.required = false;
+                    sumberLainnyaText.value = ''; 
+                }
+
+                if (this.value === 'Sosialisasi di LPK' || this.value === 'Teman / Rekan') { 
+                    // Asumsi Team JP SMART SIM bisa masuk kategori teman/rekan atau LPK, 
+                    // Sesuaikan kondisi if ini jika "Team JP SMART SIM" adalah opsi tersendiri.
+                    // Berdasarkan prompt Anda, saya trigger saat "Sosialisasi di LPK" dipilih.
+                }
+
+                if (this.value === 'Sosialisasi di LPK') {
+                    picGroup.style.display = 'block';
+                } else {
+                    picGroup.style.display = 'none';
+                    document.querySelectorAll('input[name="PIC"]').forEach(r => r.checked = false);
+                }
+            });
+        });
+
+        // 5. Proses Pengiriman Form
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); 
+
+            if (nikInput.value.length > 0 && nikInput.value.length !== 16) {
+                alert('Pastikan NIK terdiri dari 16 digit angka.');
+                nikInput.focus();
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Mengirim...';
+
+            const formData = new FormData(form);
+            const data = {};
+            
+            formData.forEach((value, key) => {
+                if (typeof value !== 'object') {
+                    data[key] = value;
+                }
+            });
+
+            // Timpa nilai "Sumber Informasi" dengan teks input jika "Lainnya" dipilih
+            if (data['Sumber Informasi'] === 'Lainnya') {
+                data['Sumber Informasi'] = sumberLainnyaText.value;
+            }
+
+            const ktpFile = ktpUpload.files[0];
+            const pasporFile = pasporUpload.files[0];
+            const filePromises = [];
+
+            if (ktpFile) {
+                filePromises.push(readFileAsBase64(ktpFile).then(base64 => {
+                    data['Foto KTP'] = {
+                        fileName: ktpFile.name,
+                        mimeType: ktpFile.type,
+                        data: base64.split(',')[1] 
+                    };
+                }));
+            }
+
+            if (pasporFile) {
+                filePromises.push(readFileAsBase64(pasporFile).then(base64 => {
+                    data['Foto Paspor'] = {
+                        fileName: pasporFile.name,
+                        mimeType: pasporFile.type,
+                        data: base64.split(',')[1]
+                    };
+                }));
+            }
+            
+            Promise.all(filePromises).then(() => {
+                if (!SCRIPT_URL) {
+                    alert('URL Google Apps Script belum diatur. Silakan cek kode dan ikuti instruksi.');
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Daftar Sekarang';
+                    console.log("Data yang akan dikirim:", data);
+                    form.style.display = 'none';
+                    successMessage.style.display = 'block';
+                    return;
+                }
+
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(res => {
+                    console.log("SUCCESS!", res);
+                    form.reset();
+                    ktpFilename.textContent = '';
+                    pasporFilename.textContent = '';
+                    form.style.display = 'none';
+                    successMessage.style.display = 'block';
+                })
+                .catch(err => {
+                    console.error("ERROR!", err);
+                    alert('Terjadi kesalahan saat mengirim formulir. Silakan coba lagi.');
+                })
+                .finally(() => {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Daftar Sekarang';
+                });
+            });
+        });
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+    </script>
+</body>
+</html>
