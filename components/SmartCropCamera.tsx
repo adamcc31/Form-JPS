@@ -16,21 +16,76 @@ export default function SmartCropCamera({ label, overlayType, onCapture, require
   const [showCamera, setShowCamera] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  
   const webcamRef = useRef<Webcam>(null);
+  const frameRef = useRef<HTMLImageElement>(null);
 
   const handleCapture = async () => {
     if (!webcamRef.current) return;
-
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (!imageSrc) return;
+    
+    // Use the raw video element for smart cropping
+    const video = webcamRef.current.video;
+    if (!video || !frameRef.current) return;
 
     setIsProcessing(true);
 
     try {
-      const base64Response = await fetch(imageSrc);
-      const blob = await base64Response.blob();
+      // 1. Calculate the actual rendered dimensions of the video due to object-cover
+      const videoRect = video.getBoundingClientRect();
+      const frameRect = frameRef.current.getBoundingClientRect();
+      
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+      const videoRatio = videoWidth / videoHeight;
+      const rectRatio = videoRect.width / videoRect.height;
+      
+      let scale;
+      let renderOffsetX = 0;
+      let renderOffsetY = 0;
+      
+      if (videoRatio > rectRatio) {
+        // Video is wider than container, scaled by height
+        scale = videoRect.height / videoHeight;
+        renderOffsetX = (videoRect.width - (videoWidth * scale)) / 2;
+      } else {
+        // Video is taller than container, scaled by width
+        scale = videoRect.width / videoWidth;
+        renderOffsetY = (videoRect.height - (videoHeight * scale)) / 2;
+      }
+      
+      // 2. Find the frame's position relative to the video element's top-left
+      const frameX = frameRect.left - videoRect.left;
+      const frameY = frameRect.top - videoRect.top;
+      
+      // 3. Convert screen coordinates to original video coordinates
+      const sourceX = Math.max(0, (frameX - renderOffsetX) / scale);
+      const sourceY = Math.max(0, (frameY - renderOffsetY) / scale);
+      const sourceWidth = Math.min(videoWidth - sourceX, frameRect.width / scale);
+      const sourceHeight = Math.min(videoHeight - sourceY, frameRect.height / scale);
+      
+      // 4. Draw the cropped area to a canvas
+      const canvas = document.createElement('canvas');
+      const targetWidth = 1024; // High quality output width
+      const targetHeight = (sourceHeight / sourceWidth) * targetWidth;
+      
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(
+          video,
+          sourceX, sourceY, sourceWidth, sourceHeight,
+          0, 0, targetWidth, targetHeight
+        );
+      }
+      
+      // 5. Get the base64 from the canvas
+      const croppedBase64 = canvas.toDataURL('image/jpeg', 1.0);
+      const blob = await (await fetch(croppedBase64)).blob();
       const file = new File([blob], `${overlayType}_capture.jpg`, { type: "image/jpeg" });
 
+      // Compress the cropped image to ensure small payload
       const options = {
         maxSizeMB: 0.3,
         maxWidthOrHeight: 1024,
@@ -91,7 +146,7 @@ export default function SmartCropCamera({ label, overlayType, onCapture, require
       )}
 
       {showCamera && !capturedImage && (
-        <div className="relative overflow-hidden rounded-xl bg-gray-900 border border-gray-200 shadow-inner">
+        <div className="relative overflow-hidden rounded-xl bg-gray-900 border border-gray-200 shadow-inner h-[65vh] max-h-[600px] min-h-[450px]">
           <Webcam
             ref={webcamRef}
             audio={false}
@@ -99,15 +154,16 @@ export default function SmartCropCamera({ label, overlayType, onCapture, require
             videoConstraints={{
               facingMode: "environment", // Better to use environment for taking ID photos
             }}
-            className="w-full h-auto object-cover"
+            className="absolute inset-0 w-full h-full object-cover"
           />
           
           {/* Overlay Guideline Frame */}
-          <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+          <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center p-6 pb-32">
             <img 
+              ref={frameRef}
               src={overlayType === "ktp" ? "/img/FRAME KTP.png" : "/img/FRAME PASPOR IDENTITAS.png"} 
               alt={`Frame ${overlayType}`}
-              className="w-full h-full object-cover opacity-80"
+              className="w-full max-w-[90%] h-auto object-contain opacity-80 drop-shadow-xl"
             />
           </div>
 
