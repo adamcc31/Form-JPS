@@ -170,7 +170,7 @@ export default function SmartCropCamera({ label, overlayType, onCapture, require
               className="opacity-80 drop-shadow-2xl"
               style={{ 
                 transform: 'rotate(90deg)', 
-                width: 'min(65vh, 450px)'
+                width: 'min(78vh, 540px)' /* Diperbesar 20% dari 65vh, 450px */
               }}
             />
           </div>
