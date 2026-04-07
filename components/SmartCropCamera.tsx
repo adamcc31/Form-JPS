@@ -65,18 +65,22 @@ export default function SmartCropCamera({ label, overlayType, onCapture, require
       
       // 4. Draw the cropped area to a canvas
       const canvas = document.createElement('canvas');
-      const targetWidth = 1024; // High quality output width
-      const targetHeight = (sourceHeight / sourceWidth) * targetWidth;
+      const targetWidth = 1024; // High quality output width for landscape
+      // Since the crop is portrait, we swap proportions to make canvas landscape
+      const targetHeight = (sourceWidth / sourceHeight) * targetWidth; 
       
       canvas.width = targetWidth;
       canvas.height = targetHeight;
       
       const ctx = canvas.getContext('2d');
       if (ctx) {
+        // Rotate -90 degrees so the portrait crop becomes a proper landscape image
+        ctx.translate(targetWidth / 2, targetHeight / 2);
+        ctx.rotate(-90 * Math.PI / 180);
         ctx.drawImage(
           video,
           sourceX, sourceY, sourceWidth, sourceHeight,
-          0, 0, targetWidth, targetHeight
+          -targetHeight / 2, -targetWidth / 2, targetHeight, targetWidth
         );
       }
       
@@ -146,7 +150,7 @@ export default function SmartCropCamera({ label, overlayType, onCapture, require
       )}
 
       {showCamera && !capturedImage && (
-        <div className="relative overflow-hidden rounded-xl bg-gray-900 border border-gray-200 shadow-inner h-[65vh] max-h-[600px] min-h-[450px]">
+        <div className="relative overflow-hidden rounded-xl bg-gray-900 border border-gray-200 shadow-inner h-[80vh] max-h-[800px] min-h-[500px]">
           <Webcam
             ref={webcamRef}
             audio={false}
@@ -158,12 +162,16 @@ export default function SmartCropCamera({ label, overlayType, onCapture, require
           />
           
           {/* Overlay Guideline Frame */}
-          <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center p-6 pb-32">
+          <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center pb-24">
             <img 
               ref={frameRef}
               src={overlayType === "ktp" ? "/img/FRAME KTP.png" : "/img/FRAME PASPOR IDENTITAS.png"} 
               alt={`Frame ${overlayType}`}
-              className="w-full max-w-[90%] h-auto object-contain opacity-80 drop-shadow-xl"
+              className="opacity-80 drop-shadow-2xl"
+              style={{ 
+                transform: 'rotate(90deg)', 
+                width: 'min(65vh, 450px)'
+              }}
             />
           </div>
 
