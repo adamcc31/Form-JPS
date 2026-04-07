@@ -236,9 +236,7 @@ export default function SmartCropCamera({ label, overlayType, onCapture, require
               facingMode: "environment",
               width: { ideal: 3840, min: 1920 },
               height: { ideal: 2160, min: 1080 },
-              aspectRatio: { ideal: 16/9 },
-              focusMode: "continuous",
-              focusDistance: { ideal: 0.5 }
+              aspectRatio: { ideal: 16/9 }
             }}
             className="absolute inset-0 w-full h-full object-cover"
           />
