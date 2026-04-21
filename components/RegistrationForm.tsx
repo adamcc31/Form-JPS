@@ -329,12 +329,12 @@ export default function RegistrationForm() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {[
-                  "3 GB Call Sim - Sinyal 5G (¥1.408/bulan)",
-                  "20 GB Call Sim - Sinyal 5G (¥2.178/bulan)",
-                  "100 GB Call Sim - Sinyal 5G (¥5.478/bulan)",
-                  "3 GB Data Sim - Sinyal 4G LTE (¥1.078/bulan)",
-                  "20 GB Data Sim - Sinyal 4G LTE (¥2.178/bulan)",
-                  "100 GB Data Sim - Sinyal 4G LTE (¥5.158/bulan)",
+                  "3 GB Call Sim (Call dan Internet) (¥1.408/bulan)",
+                  "20 GB Call Sim (Call dan Internet) (¥2.178/bulan)",
+                  "100 GB Call Sim (Call dan Internet) (¥5.478/bulan)",
+                  "3 GB Data Sim (Internet Only) (¥1.078/bulan)",
+                  "20 GB Data Sim (Internet Only) (¥2.178/bulan)",
+                  "100 GB Data Sim (Internet Only) (¥5.158/bulan)",
                 ].map((paket) => (
                   <label key={paket} className={`flex items-start space-x-3 p-4 border rounded-xl cursor-pointer transition-all duration-200 ${watch("pilihanPaket") === paket ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>
                     <div className="flex items-center h-5">
@@ -346,8 +346,8 @@ export default function RegistrationForm() {
                       />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-900 leading-tight">{paket.split(' (')[0]}</span>
-                      <span className="text-xs text-blue-600 font-semibold mt-1">({paket.split('(')[1]}</span>
+                      <span className="text-sm font-medium text-gray-900 leading-tight">{paket.substring(0, paket.lastIndexOf(' ('))}</span>
+                      <span className="text-xs text-blue-600 font-semibold mt-1">{paket.substring(paket.lastIndexOf(' ('))}</span>
                     </div>
                   </label>
                 ))}

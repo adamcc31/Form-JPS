@@ -363,7 +363,7 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
           </p>
           <div 
             className="relative overflow-hidden rounded-lg bg-gray-100 border touch-none user-select-none"
-            style={{ width: "fit-content", margin: "0 auto" }}
+            style={{ width: "fit-content", margin: "0 auto", touchAction: "none" }}
           >
             <canvas
               ref={canvasRef}
@@ -375,7 +375,8 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
               onTouchMove={onPointerMove}
               onTouchEnd={onPointerUp}
               onTouchCancel={onPointerUp}
-              className="max-w-full block"
+              className="max-w-full block touch-none"
+              style={{ touchAction: "none" }}
             />
           </div>
           <div className="flex w-full space-x-3">
