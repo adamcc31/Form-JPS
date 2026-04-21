@@ -250,7 +250,11 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
     
     const pos = getCanvasPos(clientX, clientY);
     
-    // Cari dot terdekat yg kena hit — gunakan HIT_RADIUS yang besar
+    // Konversi target radius dari layar sentuh (CSS pixels) ke satuan canvas internal
+    const canvas = canvasRef.current;
+    const hitRadiusInternal = canvas ? (HIT_RADIUS * (canvas.width / canvas.getBoundingClientRect().width)) : HIT_RADIUS;
+    
+    // Cari dot terdekat yg kena hit
     let closestIdx = -1;
     let closestDist = Infinity;
     
@@ -258,7 +262,8 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
       const dx = pt.x - pos.x;
       const dy = pt.y - pos.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist <= HIT_RADIUS && dist < closestDist) {
+      // Pengecekan collision menggunakan jarak dinamis yang sudah di-scale
+      if (dist <= hitRadiusInternal && dist < closestDist) {
         closestDist = dist;
         closestIdx = idx;
       }

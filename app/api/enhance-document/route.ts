@@ -58,20 +58,12 @@ export async function POST(req: NextRequest) {
       .webp({ quality: 90 })
       .toBuffer();
 
-    // Pastikan folder uploads ada
-    const uploadDir = join(process.cwd(), "public", "uploads");
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
-    }
+    // Convert to Base64 (Data URI) to avoid local file system write errors on serverless deployments (Vercel/Netlify)
+    const base64Data = enhancedBuffer.toString("base64");
+    const dataUri = `data:image/webp;base64,${base64Data}`;
 
-    // Nama file random
-    const fileName = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.webp`;
-    const filePath = join(uploadDir, fileName);
-
-    await writeFile(filePath, enhancedBuffer);
-
-    // Return URL untuk diakses dari public
-    return NextResponse.json({ url: `/uploads/${fileName}` });
+    // Return Data URI for direct saving to GS Payload
+    return NextResponse.json({ url: dataUri });
   } catch (error: any) {
     console.error("Error processing document:", error?.message || error);
     console.error("Stack:", error?.stack);
