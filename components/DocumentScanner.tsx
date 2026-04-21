@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useOpenCV } from "@/lib/useOpenCV";
 import { Point, detectDocumentCorners, applyPerspectiveTransform, canvasToBlob, getBlurScore } from "@/lib/opencv-utils";
 
@@ -14,7 +14,10 @@ interface DocumentScannerProps {
 
 type Stage = "upload" | "detecting" | "adjusting" | "uploading" | "done";
 
-const MAGNIFIER_RADIUS = 15;
+// Handle radius — besar untuk jari di mobile (visual)
+const HANDLE_RADIUS = 22;
+// Hit-test radius — bahkan lebih besar supaya mudah dipilih
+const HIT_RADIUS = 40;
 
 export default function DocumentScanner({ label, overlayType, onCapture, required = false, bannerImage }: DocumentScannerProps) {
   const { loaded, error } = useOpenCV();
@@ -25,21 +28,44 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Image element untuk nyimpen gambar asli yang diupload user
   const [sourceImg, setSourceImg] = useState<HTMLImageElement | null>(null);
   
-  // Posisi 4 sudut (TL, TR, BR, BL) di canvas (koordinat ditampilkan)
+  // Posisi 4 sudut (TL, TR, BR, BL) di canvas (koordinat internal canvas)
   const [corners, setCorners] = useState<Point[]>([]);
   const [draggingPointIdx, setDraggingPointIdx] = useState<number | null>(null);
   const [displayScale, setDisplayScale] = useState(1);
+  // Rasio antara CSS display size dan internal canvas size 
+  // (canvas internal bisa berbeda dari CSS display jika max-width constrains it)
+  const [cssScale, setCssScale] = useState(1);
   
-  // Saat image dimuat
+  // Saat image dimuat, atau corners berubah → redraw
   useEffect(() => {
     if (stage === "adjusting" && sourceImg && canvasRef.current) {
       drawCanvas();
     }
   }, [corners, stage, sourceImg]);
+
+  // Track CSS scale (saat canvas CSS width != canvas.width)
+  useEffect(() => {
+    if (stage !== "adjusting" || !canvasRef.current) return;
+    
+    const updateCssScale = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const cssWidth = canvas.getBoundingClientRect().width;
+      const internalWidth = canvas.width;
+      if (internalWidth > 0) {
+        setCssScale(cssWidth / internalWidth);
+      }
+    };
+    
+    updateCssScale();
+    window.addEventListener("resize", updateCssScale);
+    return () => window.removeEventListener("resize", updateCssScale);
+  }, [stage, sourceImg]);
 
   const resetState = () => {
     setStage("upload");
@@ -75,27 +101,13 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
   };
 
   const processInitialDetection = (img: HTMLImageElement) => {
-    // Buat offscreen canvas max 1000px supaya deteksi tidak terlalu berat
-    const maxDim = 1000;
-    let scale = 1;
-    if (img.width > maxDim || img.height > maxDim) {
-      scale = maxDim / Math.max(img.width, img.height);
-    }
-
-    const tempW = img.width * scale;
-    const tempH = img.height * scale;
-    
-    // Scale yg dipakai utk display menyesuaikan container 
-    // tapi corner disave pakai coordinate relatif thd original image or display?
-    // Lebih mudah corner relatif thd canvas yg dirender.
-    
     // Kita render ke display width (maks containerWidth)
-    const containerWidth = Math.min(window.innerWidth - 64, 600); 
+    const containerWidth = Math.min(window.innerWidth - 48, 600); 
     const displayScl = containerWidth / img.width;
     setDisplayScale(displayScl);
     
-    const cw = img.width * displayScl;
-    const ch = img.height * displayScl;
+    const cw = Math.round(img.width * displayScl);
+    const ch = Math.round(img.height * displayScl);
 
     const tmpCanvas = document.createElement("canvas");
     tmpCanvas.width = cw;
@@ -130,8 +142,8 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const w = sourceImg.width * displayScale;
-    const h = sourceImg.height * displayScale;
+    const w = Math.round(sourceImg.width * displayScale);
+    const h = Math.round(sourceImg.height * displayScale);
     canvas.width = w;
     canvas.height = h;
 
@@ -139,7 +151,7 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
     ctx.drawImage(sourceImg, 0, 0, w, h);
 
     // Draw overlay semi transparent bg
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
     ctx.beginPath();
     ctx.rect(0, 0, w, h);
     ctx.fill();
@@ -158,74 +170,184 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
 
       // Draw poly stroke
       ctx.strokeStyle = "#3b82f6"; // blue-500
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(corners[0].x, corners[0].y);
+      ctx.lineTo(corners[1].x, corners[1].y);
+      ctx.lineTo(corners[2].x, corners[2].y);
+      ctx.lineTo(corners[3].x, corners[3].y);
+      ctx.closePath();
       ctx.stroke();
 
-      // Draw corners
-      corners.forEach((pt) => {
+      // Draw edge midpoints (visual cue - small dots)
+      for (let i = 0; i < 4; i++) {
+        const next = (i + 1) % 4;
+        const mx = (corners[i].x + corners[next].x) / 2;
+        const my = (corners[i].y + corners[next].y) / 2;
         ctx.beginPath();
-        ctx.arc(pt.x, pt.y, MAGNIFIER_RADIUS, 0, 2 * Math.PI);
-        ctx.fillStyle = "#3b82f6"; // blue-500
+        ctx.arc(mx, my, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = "rgba(59, 130, 246, 0.6)";
         ctx.fill();
+      }
+
+      // Draw corner handles - large and visible
+      corners.forEach((pt, idx) => {
+        // Outer glow
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, HANDLE_RADIUS + 4, 0, 2 * Math.PI);
+        ctx.fillStyle = "rgba(59, 130, 246, 0.2)";
+        ctx.fill();
+        
+        // Main handle
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, HANDLE_RADIUS, 0, 2 * Math.PI);
+        ctx.fillStyle = draggingPointIdx === idx ? "#2563eb" : "#3b82f6";
+        ctx.fill();
+        
+        // White ring
         ctx.lineWidth = 3;
         ctx.strokeStyle = "#ffffff";
         ctx.stroke();
+
+        // Inner dot
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
       });
     }
   };
 
-  const getEventPos = (e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
+  // Konversi posisi pointer (mouse/touch) dari CSS coords → canvas internal coords
+  const getCanvasPos = useCallback((clientX: number, clientY: number): Point => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
     
-    let clientX, clientY;
+    // Hitung rasio CSS → canvas internal  
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  }, []);
+
+  const onPointerDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    if (stage !== "adjusting") return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    let clientX: number, clientY: number;
     if ("touches" in e) {
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
     } else {
-      clientX = (e as React.MouseEvent).clientX;
-      clientY = (e as React.MouseEvent).clientY;
-    }
-
-    return {
-      x: clientX - rect.left,
-      y: clientY - rect.top,
-    };
-  };
-
-  const onPointerDown = (e: React.MouseEvent | React.TouchEvent) => {
-    if (stage !== "adjusting") return;
-    const pos = getEventPos(e);
-    // Cari dot terdekat yg kena hit
-    const hitIndex = corners.findIndex(pt => {
-      const dx = pt.x - pos.x;
-      const dy = pt.y - pos.y;
-      return Math.sqrt(dx * dx + dy * dy) <= MAGNIFIER_RADIUS * 2;
-    });
-
-    if (hitIndex !== -1) {
-      setDraggingPointIdx(hitIndex);
-    }
-  };
-
-  const onPointerMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (draggingPointIdx === null || stage !== "adjusting") return;
-    if (e.cancelable && e.type !== "mousemove") {
-      e.preventDefault();
+      clientX = e.clientX;
+      clientY = e.clientY;
     }
     
-    const pos = getEventPos(e);
+    const pos = getCanvasPos(clientX, clientY);
+    
+    // Cari dot terdekat yg kena hit — gunakan HIT_RADIUS yang besar
+    let closestIdx = -1;
+    let closestDist = Infinity;
+    
+    corners.forEach((pt, idx) => {
+      const dx = pt.x - pos.x;
+      const dy = pt.y - pos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= HIT_RADIUS && dist < closestDist) {
+        closestDist = dist;
+        closestIdx = idx;
+      }
+    });
+
+    if (closestIdx !== -1) {
+      setDraggingPointIdx(closestIdx);
+    }
+  }, [stage, corners, getCanvasPos]);
+
+  const onPointerMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    if (draggingPointIdx === null || stage !== "adjusting") return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    let clientX: number, clientY: number;
+    if ("touches" in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const pos = getCanvasPos(clientX, clientY);
+    
     setCorners((prev) => {
       const next = [...prev];
+      // Clamp to canvas bounds
+      const canvas = canvasRef.current;
+      if (canvas) {
+        pos.x = Math.max(0, Math.min(canvas.width, pos.x));
+        pos.y = Math.max(0, Math.min(canvas.height, pos.y));
+      }
       next[draggingPointIdx] = pos;
       return next;
     });
-  };
+  }, [draggingPointIdx, stage, getCanvasPos]);
 
-  const onPointerUp = () => {
+  const onPointerUp = useCallback(() => {
     setDraggingPointIdx(null);
-  };
+  }, []);
+
+  // Global event listeners for move/up to catch events outside canvas
+  useEffect(() => {
+    if (draggingPointIdx === null) return;
+    
+    const handleGlobalMove = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      let clientX: number, clientY: number;
+      if ("touches" in e) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+      
+      const pos = getCanvasPos(clientX, clientY);
+      setCorners((prev) => {
+        const next = [...prev];
+        const canvas = canvasRef.current;
+        if (canvas) {
+          pos.x = Math.max(0, Math.min(canvas.width, pos.x));
+          pos.y = Math.max(0, Math.min(canvas.height, pos.y));
+        }
+        next[draggingPointIdx] = pos;
+        return next;
+      });
+    };
+    
+    const handleGlobalUp = () => {
+      setDraggingPointIdx(null);
+    };
+    
+    window.addEventListener("mousemove", handleGlobalMove);
+    window.addEventListener("mouseup", handleGlobalUp);
+    window.addEventListener("touchmove", handleGlobalMove, { passive: false });
+    window.addEventListener("touchend", handleGlobalUp);
+    window.addEventListener("touchcancel", handleGlobalUp);
+    
+    return () => {
+      window.removeEventListener("mousemove", handleGlobalMove);
+      window.removeEventListener("mouseup", handleGlobalUp);
+      window.removeEventListener("touchmove", handleGlobalMove);
+      window.removeEventListener("touchend", handleGlobalUp);
+      window.removeEventListener("touchcancel", handleGlobalUp);
+    };
+  }, [draggingPointIdx, getCanvasPos]);
 
   const handleConfirmCrop = async () => {
     if (!sourceImg || corners.length !== 4) return;
@@ -248,34 +370,28 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
       srcCtx.drawImage(sourceImg, 0, 0);
 
       // Hitung dimensi target sesuai rasio dokumen
-      // KTP = ~85.6mm x 53.98mm => landscape
-      // Paspor = ~125mm x 88mm => portrait (tergantung orientasi scan, kita pakai asumsi default landscape)
-      // Gunakan resolusi yg wajar, toh server nanti resize ke 2400 max
       const ratio = overlayType === "ktp" ? 85.6 / 53.98 : 125 / 88;
       
-      // Ambil ukuran terpanjang dari dokumen sebagai basis lebar (w)
       let dstWidth = 1200;
-      let dstHeight = dstWidth / ratio;
-      // Jika dokumen dipasang berdiri di HP (portrait)
-      // Coba tentukan dari jarak X corners
+      let dstHeight = Math.round(dstWidth / ratio);
+      
       const topWidth = Math.hypot(origCorners[0].x - origCorners[1].x, origCorners[0].y - origCorners[1].y);
       const leftHeight = Math.hypot(origCorners[0].x - origCorners[3].x, origCorners[0].y - origCorners[3].y);
       if (topWidth < leftHeight) {
-        // Document is portrait, flip our target dims
         [dstWidth, dstHeight] = [dstHeight, dstWidth];
       }
 
       const warpedCanvas = applyPerspectiveTransform(srcCanvas, origCorners, dstWidth, dstHeight);
       
-      // Ambil blur score untuk dikirim (sistem kita di route bs ambil keputusan)
+      // Ambil blur score
       const blurScore = getBlurScore(warpedCanvas);
 
-      // Convert ke blob
-      const blob = await canvasToBlob(warpedCanvas, 0.95);
+      // Convert ke blob — gunakan JPEG karena didukung semua browser
+      const blob = await canvasToBlob(warpedCanvas, 0.92);
       
       // Kirim via formulir POST ke /api/enhance-document
       const formData = new FormData();
-      formData.append("file", blob, `${overlayType}_dokumen.webp`);
+      formData.append("file", blob, `${overlayType}_dokumen.jpg`);
       formData.append("blurScore", blurScore.toString());
 
       const res = await fetch("/api/enhance-document", {
@@ -284,8 +400,12 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Gagal menggunggah & mengenhance gambar");
+        let errorMsg = "Gagal mengunggah & mengenhance gambar";
+        try {
+          const errorData = await res.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch { /* response bukan JSON */ }
+        throw new Error(errorMsg);
       }
 
       const data = await res.json();
@@ -296,7 +416,7 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
 
     } catch (err: any) {
       setErrorMessage(err.message || "Terjadi kesalahan saat memproses gambar.");
-      setStage("adjusting"); // kembalikan ke menyesuaikan agar bisa dicoba lg
+      setStage("adjusting");
     }
   };
 
@@ -362,21 +482,16 @@ export default function DocumentScanner({ label, overlayType, onCapture, require
             Geser 4 titik sudut biru untuk menyesuaikan bentuk {label}.
           </p>
           <div 
-            className="relative overflow-hidden rounded-lg bg-gray-100 border touch-none user-select-none"
-            style={{ width: "fit-content", margin: "0 auto", touchAction: "none" }}
+            ref={containerRef}
+            className="relative rounded-lg bg-gray-100 border select-none"
+            style={{ width: "100%", touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
           >
             <canvas
               ref={canvasRef}
               onMouseDown={onPointerDown}
-              onMouseMove={onPointerMove}
-              onMouseUp={onPointerUp}
-              onMouseLeave={onPointerUp}
               onTouchStart={onPointerDown}
-              onTouchMove={onPointerMove}
-              onTouchEnd={onPointerUp}
-              onTouchCancel={onPointerUp}
-              className="max-w-full block touch-none"
-              style={{ touchAction: "none" }}
+              className="w-full block rounded-lg"
+              style={{ touchAction: "none", WebkitTouchCallout: "none" }}
             />
           </div>
           <div className="flex w-full space-x-3">

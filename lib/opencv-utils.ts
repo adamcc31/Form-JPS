@@ -178,16 +178,17 @@ export function getBlurScore(canvas: HTMLCanvasElement): number {
 }
 
 /**
- * Helper untuk mengubah canvas menjadi Blob file WebP
+ * Helper untuk mengubah canvas menjadi Blob file JPEG
+ * (menggunakan JPEG karena didukung semua browser termasuk iOS Safari)
  */
-export function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.9): Promise<Blob> {
+export function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.92): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
         if (blob) resolve(blob);
         else reject(new Error("Gagal mengkonversi canvas ke blob"));
       },
-      "image/webp",
+      "image/jpeg",
       quality
     );
   });

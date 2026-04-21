@@ -19,21 +19,36 @@ export async function POST(req: NextRequest) {
       const blurScore = parseFloat(blurScoreStr);
       // Nilai threshold variance Laplacian bisa diatur, 
       // umumnya < 100 berarti terlalu blur
-      if (blurScore < 50) {
+      if (!isNaN(blurScore) && blurScore < 50) {
         return NextResponse.json({ 
           error: "Gambar terdeteksi terlalu buram. Mohon ambil foto di tempat yang lebih terang atau fokuskan kamera." 
         }, { status: 400 });
       }
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    if (buffer.length === 0) {
+      return NextResponse.json({ error: "File kosong atau rusak" }, { status: 400 });
+    }
 
     // Proses Sharp: normalize, modulate, sharpen, resize, webp
+    // Pipeline dijalankan per-step supaya kita bisa debug kalau error
+    let pipeline = sharp(buffer);
+    
+    // Dapatkan metadata dulu untuk memastikan gambar valid
+    const metadata = await pipeline.metadata();
+    if (!metadata.width || !metadata.height) {
+      return NextResponse.json({ error: "File bukan gambar yang valid" }, { status: 400 });
+    }
+
     const enhancedBuffer = await sharp(buffer)
+      .rotate() // Auto-rotate berdasarkan EXIF orientation (penting untuk foto HP)
       .normalize()
       .modulate({
-        brightness: 1.05, // sedikit diterangkan
-        saturation: 1.1,  // sedikit lebih bewarna supaya tulisan jelas
+        brightness: 1.05,
+        saturation: 1.1,
       })
       .sharpen({ sigma: 1.5 })
       .resize({
@@ -58,9 +73,10 @@ export async function POST(req: NextRequest) {
     // Return URL untuk diakses dari public
     return NextResponse.json({ url: `/uploads/${fileName}` });
   } catch (error: any) {
-    console.error("Error processing document:", error);
+    console.error("Error processing document:", error?.message || error);
+    console.error("Stack:", error?.stack);
     return NextResponse.json(
-      { error: "Gagal memproses dokumen di server" },
+      { error: `Gagal memproses dokumen: ${error?.message || "Unknown error"}` },
       { status: 500 }
     );
   }
