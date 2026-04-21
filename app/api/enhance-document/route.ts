@@ -55,12 +55,12 @@ export async function POST(req: NextRequest) {
         width: 2400,
         withoutEnlargement: true,
       })
-      .webp({ quality: 90 })
+      .jpeg({ quality: 90 })
       .toBuffer();
 
     // Convert to Base64 (Data URI) to avoid local file system write errors on serverless deployments (Vercel/Netlify)
     const base64Data = enhancedBuffer.toString("base64");
-    const dataUri = `data:image/webp;base64,${base64Data}`;
+    const dataUri = `data:image/jpeg;base64,${base64Data}`;
 
     // Return Data URI for direct saving to GS Payload
     return NextResponse.json({ url: dataUri });

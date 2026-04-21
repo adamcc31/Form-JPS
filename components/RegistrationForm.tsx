@@ -31,6 +31,19 @@ export default function RegistrationForm() {
     setValue("namaLengkap", upperValue);
   };
 
+  const formatImagePayload = (dataUri?: string, prefixStr?: string) => {
+    if (!dataUri || !dataUri.startsWith("data:")) return ""; // Fallback if empty or not valid
+    const [header, base64Data] = dataUri.split(",");
+    const mimeType = header.split(":")[1].split(";")[0];
+    const safeName = prefixStr ? prefixStr.replace(/[^a-zA-Z0-9]/g, '_') : 'document';
+    
+    return {
+      fileName: `${safeName}.jpg`,
+      mimeType: mimeType,
+      data: base64Data
+    };
+  };
+
   const onSubmit = async (data: RegistrationFormData) => {
     setIsSubmitting(true);
     setSubmitStatus("idle");
@@ -51,8 +64,8 @@ export default function RegistrationForm() {
       "Jenis Kartu": data.jenisKartu,
       "Sumber Informasi": showSumberInfoLainnya ? (data.sumberInfoLainnya || data.sumberInfo) : data.sumberInfo,
       "PIC": data.pic || "",
-      "Foto KTP": data.fotoKtp,
-      "Foto Paspor": data.fotoPaspor || "",
+      "Foto KTP": formatImagePayload(data.fotoKtp, `KTP_${data.namaLengkap}`),
+      "Foto Paspor": data.fotoPaspor ? formatImagePayload(data.fotoPaspor, `Paspor_${data.namaLengkap}`) : "",
     };
 
     try {
