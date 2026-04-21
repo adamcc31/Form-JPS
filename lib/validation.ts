@@ -19,16 +19,8 @@ export const registrationSchema = z.object({
   sumberInfo: z.string().min(1, "Sumber Info wajib diisi"),
   sumberInfoLainnya: z.string().optional(),
   pic: z.string().optional(),
-  fotoKtp: z.object({
-    fileName: z.string(),
-    mimeType: z.string(),
-    data: z.string(),
-  }),
-  fotoPaspor: z.object({
-    fileName: z.string(),
-    mimeType: z.string(),
-    data: z.string(),
-  }).optional(),
+  fotoKtp: z.string().min(1, "Foto KTP wajib diunggah"),
+  fotoPaspor: z.string().optional(),
 }).refine((data) => {
   if (data.sumberInfo === "Sosialisasi di LPK") {
     return !!data.pic;

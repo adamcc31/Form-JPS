@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registrationSchema, RegistrationFormData } from "@/lib/validation";
-import SmartCropCamera from "./SmartCropCamera";
+import DocumentScanner from "./DocumentScanner";
 
 export default function RegistrationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,7 +52,7 @@ export default function RegistrationForm() {
       "Sumber Informasi": showSumberInfoLainnya ? (data.sumberInfoLainnya || data.sumberInfo) : data.sumberInfo,
       "PIC": data.pic || "",
       "Foto KTP": data.fotoKtp,
-      "Foto Paspor": data.fotoPaspor || { fileName: "", mimeType: "", data: "" },
+      "Foto Paspor": data.fotoPaspor || "",
     };
 
     try {
@@ -332,9 +332,9 @@ export default function RegistrationForm() {
                   "3 GB Call Sim - Sinyal 5G (¥1.408/bulan)",
                   "20 GB Call Sim - Sinyal 5G (¥2.178/bulan)",
                   "100 GB Call Sim - Sinyal 5G (¥5.478/bulan)",
-                  "3 GB Data Only - Sinyal 5G (¥1.078/bulan)",
-                  "20 GB Data Only - Sinyal 5G (¥2.178/bulan)",
-                  "100 GB Data Only - Sinyal 5G (¥5.158/bulan)",
+                  "3 GB Data Sim - Sinyal 4G LTE (¥1.078/bulan)",
+                  "20 GB Data Sim - Sinyal 4G LTE (¥2.178/bulan)",
+                  "100 GB Data Sim - Sinyal 4G LTE (¥5.158/bulan)",
                 ].map((paket) => (
                   <label key={paket} className={`flex items-start space-x-3 p-4 border rounded-xl cursor-pointer transition-all duration-200 ${watch("pilihanPaket") === paket ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>
                     <div className="flex items-center h-5">
@@ -501,22 +501,22 @@ export default function RegistrationForm() {
             </div>
 
             <div className="space-y-4">
-              <SmartCropCamera
+              <DocumentScanner
                 label="Foto KTP"
                 overlayType="ktp"
                 required
                 bannerImage="/img/pict-2.jpg"
-                onCapture={(imageData) => setValue("fotoKtp", imageData)}
+                onCapture={(url) => setValue("fotoKtp", url)}
               />
               {errors.fotoKtp && <p className="mt-2 text-sm text-red-600 font-medium flex items-center"><svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>Foto KTP wajib diambil</p>}
             </div>
 
             <div className="space-y-4 border-t border-gray-100 pt-8">
-              <SmartCropCamera
+              <DocumentScanner
                 label="Foto Paspor"
                 overlayType="paspor"
                 bannerImage="/img/pict-1.jpg"
-                onCapture={(imageData) => setValue("fotoPaspor", imageData)}
+                onCapture={(url) => setValue("fotoPaspor", url)}
               />
               <p className="text-sm text-gray-500 mt-2 flex items-center">
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
