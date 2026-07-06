@@ -50,9 +50,9 @@ export default function RegistrationForm() {
 
     const payload = {
       "Nama Lengkap": data.namaLengkap,
-      "NIK": data.nik,
+      "NIK": data.nik || "",
       "Nomor Paspor": data.nomorPaspor || "",
-      "Tanggal Lahir": data.tanggalLahir,
+      "Tanggal Lahir": data.tanggalLahir || "",
       "Alamat": data.alamat,
       "Email": data.email,
       "No WhatsApp": data.noWhatsapp,
@@ -178,6 +178,7 @@ export default function RegistrationForm() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* NIK Field - Di-comment sesuai revisi
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   NIK <span className="text-red-500">*</span>
@@ -191,8 +192,9 @@ export default function RegistrationForm() {
                 />
                 {errors.nik && <p className="mt-1.5 text-sm text-red-600 font-medium flex items-center"><svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{errors.nik.message}</p>}
               </div>
+              */}
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Nomor Paspor <span className="text-gray-400 font-normal text-xs ml-1">(Opsional)</span>
                 </label>
@@ -205,6 +207,7 @@ export default function RegistrationForm() {
               </div>
             </div>
 
+            {/* Tanggal Lahir Field - Di-comment sesuai revisi
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Tanggal Lahir <span className="text-red-500">*</span>
@@ -216,6 +219,7 @@ export default function RegistrationForm() {
               />
               {errors.tanggalLahir && <p className="mt-1.5 text-sm text-red-600 font-medium flex items-center"><svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{errors.tanggalLahir.message}</p>}
             </div>
+            */}
           </div>
         </div>
 
@@ -338,16 +342,16 @@ export default function RegistrationForm() {
                 Pilihan Paket <span className="text-red-500">*</span>
               </label>
               <div className="mb-4 overflow-hidden rounded-xl border border-gray-200">
-                <img src="/img/pict-3.png" alt="Paket Banner" className="w-full object-cover" />
+                <img src="/img/paket-new.png" alt="Paket Banner" className="w-full h-auto block" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {[
                   "3 GB Call Sim (Call dan Internet) (¥1.408/bulan)",
                   "20 GB Call Sim (Call dan Internet) (¥2.178/bulan)",
-                  "100 GB Call Sim (Call dan Internet) (¥5.478/bulan)",
+                  // "100 GB Call Sim (Call dan Internet) (¥5.478/bulan)", // Di-comment sesuai revisi
                   "3 GB Data Sim (Internet Only) (¥1.078/bulan)",
                   "20 GB Data Sim (Internet Only) (¥2.178/bulan)",
-                  "100 GB Data Sim (Internet Only) (¥5.158/bulan)",
+                  // "100 GB Data Sim (Internet Only) (¥5.158/bulan)", // Di-comment sesuai revisi
                 ].map((paket) => (
                   <label key={paket} className={`flex items-start space-x-3 p-4 border rounded-xl cursor-pointer transition-all duration-200 ${watch("pilihanPaket") === paket ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>
                     <div className="flex items-center h-5">
@@ -472,7 +476,7 @@ export default function RegistrationForm() {
                   Pilih PIC <span className="text-red-500">*</span>
                 </label>
                 <div className="flex space-x-4">
-                  {["Mba There", "Mas Hegar"].map((pic) => (
+                  {[/* "Mba There", */ "Mba Jeje", "Mas Hegar"].map((pic) => (
                     <label key={pic} className={`flex-1 flex items-center space-x-3 p-3 bg-white border rounded-lg cursor-pointer transition-all duration-200 ${watch("pic") === pic ? "border-blue-500 shadow-sm" : "border-gray-200 hover:border-blue-300"}`}>
                       <input
                         type="radio"

@@ -2,9 +2,11 @@ import { z } from "zod";
 
 export const registrationSchema = z.object({
   namaLengkap: z.string().min(1, "Nama Lengkap wajib diisi"),
-  nik: z.string().regex(/^\d{16}$/, "NIK harus 16 digit angka"),
+  // nik: z.string().regex(/^\d{16}$/, "NIK harus 16 digit angka"), // Di-comment sesuai revisi
+  nik: z.string().optional(),
   nomorPaspor: z.string().optional(),
-  tanggalLahir: z.string().min(1, "Tanggal Lahir wajib diisi"),
+  // tanggalLahir: z.string().min(1, "Tanggal Lahir wajib diisi"), // Di-comment sesuai revisi
+  tanggalLahir: z.string().optional(),
   alamat: z.string().min(1, "Alamat wajib diisi"),
   email: z.string().email("Format email tidak valid"),
   noWhatsapp: z.string().regex(/^\d+$/, "No WhatsApp harus berupa angka"),
